@@ -1,0 +1,6 @@
+1. Next.JS
+2. Prisma + Postgress database
+3. judgeo api
+4. shadcn ui
+5. clerk authentication
+6. tailwind css
