@@ -46,3 +46,33 @@ export const onBoardUser = async () => {
     };
   }
 };
+
+export const currentUserRole = async () => {
+  try {
+    const user = await currentUser();
+    if(!user){
+      return {
+        success: false,
+        message: "No authenticated user found",
+      };
+    }
+    const {id} = user;
+    const userRole = await db.user.findUnique({
+      where: {
+        clerkId: id,
+      },
+      select: {
+        role: true,
+      },
+    });
+    return userRole.role
+
+
+  } catch (error) {
+    console.error(" ❌ Error onBoarding user", error);
+    return {
+      success: false,
+      message: "Error onBoarding user",
+    };
+  }
+}
