@@ -65,6 +65,13 @@ export const currentUserRole = async () => {
         role: true,
       },
     });
+
+    if (!userRole) {
+      return {
+        success: false,
+        message: "User role not found",
+      };
+    }
     return userRole.role
 
 
