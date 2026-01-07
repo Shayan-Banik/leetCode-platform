@@ -20,11 +20,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-// import { onBoardUser } from "@/modules/auth/actions";
 
 export default function HomeView() {
-//   await onBoardUser();
-
   const features = [
     {
       icon: <Code2 className="w-6 h-6" />,
