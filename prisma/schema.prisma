@@ -42,9 +42,9 @@ model Problem {
 
   userId     String //creator of the problem
   examples   Json //language specific examples
-  constrains String
+  constraints String @default("")
   hints      String?
-  editorial  String
+  editorial  String?
 
   testCases         Json
   codeSnippets      Json

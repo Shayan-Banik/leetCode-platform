@@ -13,5 +13,21 @@ services:
       - leetcode_db_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  judge0:
+    image: judge0/judge0:1.13.1
+    container_name: judge0
+    volumes:
+      - /tmp/judge0-testcases:/tmp/judge0-testcases
+    ports:
+      - "2358:2358"
+    privileged: true
+    restart: unless-stopped
+    environment:
+      WORKERS: 1
+      MAX_QUEUE_SIZE: 10000
+      ENABLE_WAIT_RESULT: "true"
+    depends_on:
+      - postgres
+
 volumes:
   leetcode_db_data:
