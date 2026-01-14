@@ -34,4 +34,4 @@ const CreateProblemPage = async () => {
   )
 }
 
-export default CreateProblemPage
+export default CreateProblemPage;

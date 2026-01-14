@@ -16,6 +16,7 @@ const RootLayout = async ({ children }) => {
           bg-[size:16px_16px]
           dark:bg-[radial-gradient(#393e4a_1px,transparent_1px)]"
         />
+        
         {children}
       </div>
     </main>
