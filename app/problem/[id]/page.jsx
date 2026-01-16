@@ -40,7 +40,9 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { getJudge0LanguageId } from "@/lib/judge0";
 import { toast } from "sonner";
 import Link from "next/link";
-import { getProblemById } from "@/modules/problem/actions";
+import { executeCode, getProblemById } from "@/modules/problem/actions";
+import { SubmissionDetails } from "@/modules/problem/components/SubmissionDetails";
+import TestCaseTable from "@/modules/problem/components/TestCaseTable";
 
 const DifficultyColor = (difficulty) => {
   switch (difficulty) {
@@ -63,6 +65,7 @@ const ParticularProblemPage = ({ params }) => {
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionHistory, setSubmissionHistory] = useState([]);
+  const [executionResponse, setExecutionResponse] = useState(null);
   const { theme } = useTheme();
 
   useEffect(() => {
@@ -89,7 +92,6 @@ const ParticularProblemPage = ({ params }) => {
     }
   }, [problem, selectedLanguage]);
 
-
   if (!problem) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -98,28 +100,55 @@ const ParticularProblemPage = ({ params }) => {
     );
   }
 
-  const handleRun = () => {};
+  const handleRun = async () => {
+    try {
+      setIsRunning(true);
+      const language_Id = getJudge0LanguageId(selectedLanguage);
+      const stdin = problem.testCases.map((tc) => tc.input);
+      const expected_outputs = problem.testCases.map((tc) => tc.output);
+      const res = await executeCode(
+        code,
+        language_Id,
+        stdin,
+        expected_outputs,
+        problem.id
+      );
+
+      setExecutionResponse(res);
+
+      if (res.success) {
+        toast.success(res.message);
+      }
+    } catch (error) {
+      console.error("Error running code:", error);
+      toast.error(error.message || "Failed to run code");
+    } finally {
+      setIsRunning(false);
+    }
+  };
   const handleSubmit = () => {};
-
-
-
-
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto p-6">
-
         {/* Header */}
         <div className="mb-6 flex items-start justify-between">
           <div>
             <div className="flex items-center gap-4 mb-4">
               <Link href="/">
-                <Button className="cursor-pointer" variant="outline" size="icon">
+                <Button
+                  className="cursor-pointer"
+                  variant="outline"
+                  size="icon">
                   <ArrowLeft className="size-4" />
                 </Button>
               </Link>
               <h1 className="text-3xl font-bold">{problem?.title}</h1>
-              <Badge className={cn('font-medium', DifficultyColor(problem?.difficulty))}>
+              <Badge
+                className={cn(
+                  "font-medium",
+                  DifficultyColor(problem?.difficulty)
+                )}>
                 {problem?.difficulty}
               </Badge>
             </div>
@@ -135,7 +164,6 @@ const ParticularProblemPage = ({ params }) => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-
           {/* Left Panel */}
           <div className="space-y-6">
             <Card>
@@ -147,28 +175,36 @@ const ParticularProblemPage = ({ params }) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  <p className="text-foreground leading-relaxed">{problem?.description}</p>
-                  
+                  <p className="text-foreground leading-relaxed">
+                    {problem?.description}
+                  </p>
+
                   {/* Examples */}
                   <div>
                     <h3 className="font-semibold text-lg mb-3">Example:</h3>
                     {problem?.examples[selectedLanguage] && (
                       <div className="bg-muted p-4 rounded-lg space-y-2">
                         <div>
-                          <span className="font-medium text-amber-400">Input: </span>
+                          <span className="font-medium text-amber-400">
+                            Input:{" "}
+                          </span>
                           <code className="text-sm dark:bg-zinc-900 bg-zinc-200 text-zinc-900 dark:text-zinc-200 px-2 py-1 rounded">
                             {problem?.examples[selectedLanguage].input}
                           </code>
                         </div>
                         <div>
-                          <span className="font-medium text-amber-400">Output: </span>
+                          <span className="font-medium text-amber-400">
+                            Output:{" "}
+                          </span>
                           <code className="text-sm dark:bg-zinc-900 bg-zinc-200 text-zinc-900 dark:text-zinc-200 px-2 py-1 rounded">
                             {problem?.examples[selectedLanguage].output}
                           </code>
                         </div>
                         <div>
                           <span className="font-medium">Explanation: </span>
-                          <span className="text-sm">{problem?.examples[selectedLanguage]?.explanation}</span>
+                          <span className="text-sm">
+                            {problem?.examples[selectedLanguage]?.explanation}
+                          </span>
                         </div>
                       </div>
                     )}
@@ -178,7 +214,9 @@ const ParticularProblemPage = ({ params }) => {
                   <div>
                     <h3 className="font-semibold text-lg mb-3">Constraints:</h3>
                     <div className="bg-muted p-4 rounded-lg">
-                      <pre className="text-sm text-muted-foreground whitespace-pre-wrap">{problem?.constraints}</pre>
+                      <pre className="text-sm text-muted-foreground whitespace-pre-wrap">
+                        {problem?.constraints}
+                      </pre>
                     </div>
                   </div>
                 </div>
@@ -190,15 +228,21 @@ const ParticularProblemPage = ({ params }) => {
               <CardContent className="p-3">
                 <Tabs defaultValue="submissions" className="w-full">
                   <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="submissions" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="submissions"
+                      className="flex items-center gap-2">
                       <Trophy className="h-4 w-4" />
                       Submissions
                     </TabsTrigger>
-                    <TabsTrigger value="editorial" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="editorial"
+                      className="flex items-center gap-2">
                       <FileText className="h-4 w-4" />
                       Editorial
                     </TabsTrigger>
-                    <TabsTrigger value="hints" className="flex items-center gap-2">
+                    <TabsTrigger
+                      value="hints"
+                      className="flex items-center gap-2">
                       <Lightbulb className="h-4 w-4" />
                       Hints
                     </TabsTrigger>
@@ -210,12 +254,16 @@ const ParticularProblemPage = ({ params }) => {
                   </TabsContent>
                   <TabsContent value="editorial" className="p-6">
                     <div className="text-center py-8 text-muted-foreground">
-                      {problem.editorial ? problem.editorial : 'Editorial not available yet.'}
+                      {problem.editorial
+                        ? problem.editorial
+                        : "Editorial not available yet."}
                     </div>
                   </TabsContent>
                   <TabsContent value="hints" className="p-6">
                     <div className="text-center py-8 text-muted-foreground">
-                      {problem.hints ? problem.hints : 'No hints available for this problem.'}
+                      {problem.hints
+                        ? problem.hints
+                        : "No hints available for this problem."}
                     </div>
                   </TabsContent>
                 </Tabs>
@@ -233,7 +281,9 @@ const ParticularProblemPage = ({ params }) => {
                     <Code className="h-5 w-5" />
                     Code Editor
                   </CardTitle>
-                  <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                  <Select
+                    value={selectedLanguage}
+                    onValueChange={setSelectedLanguage}>
                     <SelectTrigger className="w-32">
                       <SelectValue />
                     </SelectTrigger>
@@ -249,19 +299,23 @@ const ParticularProblemPage = ({ params }) => {
                 <div className="border rounded-lg overflow-hidden">
                   <Editor
                     height="400px"
-                    language={selectedLanguage.toLowerCase() === 'javascript' ? 'javascript' : selectedLanguage.toLowerCase()}
+                    language={
+                      selectedLanguage.toLowerCase() === "javascript"
+                        ? "javascript"
+                        : selectedLanguage.toLowerCase()
+                    }
                     value={code}
-                    onChange={(value) => setCode(value || '')}
-                    theme={theme === 'dark' ? 'vs-dark' : 'light'}
+                    onChange={(value) => setCode(value || "")}
+                    theme={theme === "dark" ? "vs-dark" : "light"}
                     options={{
                       minimap: { enabled: false },
                       fontSize: 16,
-                      lineNumbers: 'on',
+                      lineNumbers: "on",
                       roundedSelection: false,
                       scrollBeyondLastLine: false,
                       automaticLayout: true,
                       tabSize: 2,
-                      wordWrap: 'on',
+                      wordWrap: "on",
                     }}
                   />
                 </div>
@@ -270,18 +324,16 @@ const ParticularProblemPage = ({ params }) => {
                     onClick={handleRun}
                     disabled={isRunning}
                     variant="outline"
-                    className="flex items-center gap-2"
-                  >
+                    className="flex items-center gap-2">
                     <Play className="h-4 w-4" />
-                    {isRunning ? 'Running...' : 'Run'}
+                    {isRunning ? "Running..." : "Run"}
                   </Button>
                   <Button
                     onClick={handleSubmit}
                     disabled={isSubmitting}
-                    className="flex items-center gap-2"
-                  >
+                    className="flex items-center gap-2">
                     <Send className="h-4 w-4" />
-                    {isSubmitting ? 'Submitting...' : 'Submit'}
+                    {isSubmitting ? "Submitting..." : "Submit"}
                   </Button>
                 </div>
               </CardContent>
@@ -300,16 +352,22 @@ const ParticularProblemPage = ({ params }) => {
                   <div className="space-y-4">
                     {problem.testCases.map((testCase, index) => (
                       <div key={index} className="border rounded-lg p-3">
-                        <div className="text-sm font-medium mb-2">Test Case {index + 1}</div>
+                        <div className="text-sm font-medium mb-2">
+                          Test Case {index + 1}
+                        </div>
                         <div className="space-y-1 text-sm">
                           <div>
-                            <span className="text-muted-foreground">Input: </span>
+                            <span className="text-muted-foreground">
+                              Input:{" "}
+                            </span>
                             <code className="bg-muted px-2 py-1 rounded text-xs">
                               {testCase.input}
                             </code>
                           </div>
                           <div>
-                            <span className="text-muted-foreground">Expected: </span>
+                            <span className="text-muted-foreground">
+                              Expected:{" "}
+                            </span>
                             <code className="bg-muted px-2 py-1 rounded text-xs">
                               {testCase.output}
                             </code>
@@ -324,8 +382,15 @@ const ParticularProblemPage = ({ params }) => {
 
             {/* Test Results and Submission Details */}
 
+            {executionResponse && executionResponse.submission && (
+              <div className="space-y-4 mt-4">
+                <SubmissionDetails submission={executionResponse.submission} />
+                <TestCaseTable
+                  testCases={executionResponse.submission.testCases}
+                />
+              </div>
+            )}
           </div>
-          
         </div>
       </div>
     </div>
